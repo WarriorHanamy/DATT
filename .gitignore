@@ -15,3 +15,4 @@ dist/
 *.egg-info/
 .venv/
 uv.lock
+.opencode/
