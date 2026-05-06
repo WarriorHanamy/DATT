@@ -11,3 +11,7 @@ learning/c_generated_code/
 media/
 logging/
 configuration/
+dist/
+*.egg-info/
+.venv/
+uv.lock

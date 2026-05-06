@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "datt"
+version = "0.1.0"
+description = "DATT: Deep Adaptive Trajectory Tracking for Quadrotor Control"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9, <3.11"
+dependencies = [
+    "numpy>=1.23, <2",
+    "scipy>=1.11",
+    "torch>=1.13, <2",
+    "gym==0.22.0",
+    "stable-baselines3>=1.6, <2",
+    "matplotlib>=3.2",
+    "pygame>=2.4",
+    "tqdm>=4.64",
+    "joblib>=0.14",
+    "meshcat>=0.3.2",
+    "Pillow>=10.1",
+    "rich>=13.6",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.1.0",
+    "ipython>=8.0",
+]
+
+[project.scripts]
+datt = "DATT.main:main"
+datt-train = "DATT.learning.train_policy:train"
+datt-eval = "DATT.learning.eval_policy:eval"
+
+[tool.uv]
+override-dependencies = ["gym==0.22.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["DATT*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
