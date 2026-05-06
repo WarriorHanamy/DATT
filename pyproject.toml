@@ -22,6 +22,7 @@ dependencies = [
     "meshcat>=0.3.2",
     "Pillow>=10.1",
     "rich>=13.6",
+    "tensorboard>=2.9",
 ]
 
 [project.optional-dependencies]
@@ -32,16 +33,14 @@ dev = [
 ]
 
 [project.scripts]
-datt = "DATT.main:main"
-datt-train = "DATT.learning.train_policy:train"
-datt-eval = "DATT.learning.eval_policy:eval"
+datt = "DATT.cli:main"
 
 [tool.uv]
 override-dependencies = ["gym==0.22.0"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["DATT*"]
+include = ["DATT*", "config*"]
 
 [tool.ruff]
 line-length = 100

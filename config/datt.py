@@ -1,6 +1,6 @@
 import numpy as np
 
-from DATT.configuration.configuration import *
+from config.configuration import *
 
 drone_config = DroneConfiguration(
     # mass = ConfigValue[float](1.0, randomize=False, min=0.4, max=1.6),
@@ -8,35 +8,23 @@ drone_config = DroneConfiguration(
 )
 
 wind_config = WindConfiguration(
-    is_wind = False,
-    dir = ConfigValue[np.ndarray](
-        default=np.zeros(3), 
-        randomize=False,
-        min=np.array([-1, -1, -1]),
-        max=np.array([1, 1, 1])
+    is_wind=False,
+    dir=ConfigValue[np.ndarray](
+        default=np.zeros(3), randomize=False, min=np.array([-1, -1, -1]), max=np.array([1, 1, 1])
     ),
 )
 
 init_config = InitializationConfiguration(
-    pos = ConfigValue[np.ndarray](
-        default=np.array([0.0, 0.0, 0.0]), 
+    pos=ConfigValue[np.ndarray](
+        default=np.array([0.0, 0.0, 0.0]),
         randomize=True,
         min=np.array([-0.5, -0.5, -0.5]),
-        max=np.array([ 0.5,  0.5,  0.5])
+        max=np.array([0.5, 0.5, 0.5]),
     ),
-    vel = ConfigValue[np.ndarray](
-        default=np.array([0.0, 0.0, 0.0]), 
-        randomize=False
-    ),
+    vel=ConfigValue[np.ndarray](default=np.array([0.0, 0.0, 0.0]), randomize=False),
     # Represented as Euler ZYX in degrees
-    rot = ConfigValue[np.ndarray](
-        default=np.array([0.0, 0.0, 0.0]),
-        randomize=False
-    ),
-    ang = ConfigValue[np.ndarray](
-        default=np.array([0.0, 0.0, 0.0]),
-        randomize=False
-    )
+    rot=ConfigValue[np.ndarray](default=np.array([0.0, 0.0, 0.0]), randomize=False),
+    ang=ConfigValue[np.ndarray](default=np.array([0.0, 0.0, 0.0]), randomize=False),
 )
 
 sim_config = SimConfiguration(
@@ -50,18 +38,21 @@ sim_config = SimConfiguration(
     L1_simulation=False,
 )
 
-adapt_config = AdaptationConfiguration(
-    include = []
-)
+adapt_config = AdaptationConfiguration(include=[])
 
 train_config = TrainingConfiguration()
 
 policy_config = PolicyConfiguration()
 
-ref_config = RefConfiguration(
-    init_ref = 1
+ref_config = RefConfiguration(init_ref=1)
+
+config = AllConfig(
+    drone_config,
+    wind_config,
+    init_config,
+    sim_config,
+    adapt_config,
+    train_config,
+    policy_config,
+    ref_config,
 )
-
-config = AllConfig(drone_config, wind_config, init_config, sim_config, adapt_config, train_config, policy_config, ref_config)
-
-
