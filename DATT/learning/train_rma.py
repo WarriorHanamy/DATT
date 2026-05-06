@@ -4,10 +4,6 @@ import numpy as np
 import torch.nn.functional as F
 
 from os.path import exists
-from argparse import ArgumentParser
-from DATT.learning.train_policy import TrajectoryRef
-from tqdm.rich import tqdm, Progress, RateColumn
-from rich.progress import MofNCompleteColumn, TimeElapsedColumn
 
 from DATT.learning.configs import *
 from DATT.learning.tasks import DroneTask
@@ -23,56 +19,7 @@ from stable_baselines3.common.vec_env import SubprocVecEnv, DummyVecEnv
 from torch.utils.tensorboard import SummaryWriter
 
 
-def parse_args():
-    parser = ArgumentParser()
-    parser.add_argument("-t", "--task", dest="task", type=DroneTask, default=DroneTask.HOVER)
-    parser.add_argument("-n", "--name", dest="name", default=None)
-    parser.add_argument(
-        "-an",
-        "--adapt-name",
-        dest="adapt_name",
-        default=None,
-        help="(optional) Filename of the adaptation network, if different from the policy name.",
-    )
-    parser.add_argument("-a", "--algo", dest="algo", type=RLAlgo, default=RLAlgo.PPO)
-    parser.add_argument("-i", "--iterations", dest="train_iterations", type=int, default=5000)
-    parser.add_argument(
-        "-c",
-        "--config",
-        dest="config",
-        default="default_hover.py",
-        help="Name of the configuration .py file. Default: default_hover.py",
-    )
-    parser.add_argument(
-        "-de", "--device", dest="device", type=int, default=0, help="GPU ID to use."
-    )
-
-    parser.add_argument(
-        "--ref",
-        dest="ref",
-        default=TrajectoryRef.LINE_REF,
-        type=TrajectoryRef,
-        help="Rate (Hz) of visualization. Sleeps for 1 / rate between states. Set to negative for uncapped.",
-    )
-    parser.add_argument("--n-envs", dest="n_envs", type=int, default=10)
-    parser.add_argument("--subprocess", dest="subprocess", type=bool, default=False)
-    parser.add_argument("--ymax", dest="ymax", type=float, default=0.0)
-    parser.add_argument("--zmax", dest="zmax", type=float, default=0.0)
-    parser.add_argument("--diff-axis", dest="diff_axis", type=bool, default=False)
-    parser.add_argument("--relative", dest="relative", type=bool, default=False)
-    parser.add_argument("--seed", dest="seed", type=int, default=None)
-    parser.add_argument("--body-frame", dest="body_frame", type=bool, default=False)
-    parser.add_argument("--log-scale", dest="log_scale", type=bool, default=False)
-    parser.add_argument("--second-order", dest="second_order", type=bool, default=False)
-
-    args = parser.parse_args()
-
-    return args
-
-
 def add_e_dim(fbff_obs: np.ndarray, e: np.ndarray, base_dims=10):
-    # fbff_obs shape = (n_envs, fbff_dims)
-
     obs = np.concatenate((fbff_obs[:, :base_dims], e, fbff_obs[:, base_dims:]), axis=1)
     return obs
 
@@ -106,14 +53,12 @@ def rollout_adaptive_policy(
     all_e_gt = None
     fbff_obs = remove_e_dim(evalenv.reset(), e_dims, include_extra=True)
     for i in range(rollout_len):
-        # shape (n_envs, e_dim)
         e_pred = adaptation_network(history)
 
         input_obs = add_e_dim(fbff_obs, e_pred.detach().cpu().numpy(), base_dims)
 
         actions, _states = policy.predict(input_obs, deterministic=True)
 
-        # this obs contains e, which should be removed
         obs, rewards, dones, info = evalenv.step(actions)
 
         e_gt = obs[:, base_dims : (base_dims + e_dims)]
@@ -126,13 +71,11 @@ def rollout_adaptive_policy(
             all_e_pred = torch.cat((all_e_pred, e_pred), dim=0)
             all_e_gt = torch.cat((all_e_gt, e_gt), dim=0)
 
-        # just the pos, vel, orientation part of state should be used for prediction of e
         base_states = remove_e_dim(obs, e_dims)
         adaptation_input = np.concatenate((base_states, actions), axis=1)
 
         adaptation_input = torch.from_numpy(adaptation_input).to(device).float()
 
-        # shift history forward in time
         history = torch.cat(
             (torch.unsqueeze(adaptation_input, -1), history[:, :, :-1].clone()), dim=2
         )
@@ -145,30 +88,22 @@ def rollout_adaptive_policy(
     return all_e_pred, all_e_gt
 
 
-def RMA():
-    args = parse_args()
-
-    task: DroneTask = args.task
-    task_train = task
+def train_rma(args):
+    task: DroneTask = DroneTask(args.task)
     policy_name = args.name
-    algo = args.algo
-    train_iterations = args.train_iterations
+    if policy_name is None:
+        raise ValueError("--name is required (policy name to load)")
+    algo: RLAlgo = RLAlgo(args.algo)
     config_filename = args.config
+    train_iterations = args.iterations
     adapt_name = args.adapt_name
-
-    ref = args.ref
-    ymax = args.ymax
-    zmax = args.zmax
-    seed = args.seed
-    relative = args.relative
-    body_frame = args.body_frame
-    subprocess = args.subprocess
-    log_scale = args.log_scale
     n_envs = args.n_envs
-    de = args.device
-    second_order = args.second_order
 
-    diff_axis = args.diff_axis
+    ref_str = args.ref
+    if ref_str is None:
+        config_pre: AllConfig = import_config(config_filename)
+        ref_str = config_pre.ref_config.default_ref
+    ref = TrajectoryRef.get_by_value(ref_str)
 
     if not exists(SAVED_POLICY_DIR / f"{policy_name}.zip"):
         raise ValueError(f"policy not found: {policy_name}")
@@ -188,26 +123,26 @@ def RMA():
         _, dims, _, _ = param.get_attribute(dummy_env)
         e_dims += dims
 
-    trainenv = task_train.env()(config=config)
-    vec_env_class = SubprocVecEnv if subprocess else DummyVecEnv
+    trainenv = task.env()(config=config)
+    vec_env_class = SubprocVecEnv if args.subprocess else DummyVecEnv
     evalenv = make_vec_env(
         task.env(),
         n_envs=n_envs,
         vec_env_cls=vec_env_class,
         env_kwargs={
             "config": config,
-            "log_scale": log_scale,
+            "log_scale": args.log_scale,
             "ref": ref,
-            "y_max": ymax,
-            "z_max": zmax,
-            "diff_axis": diff_axis,
-            "relative": relative,
-            "body_frame": body_frame,
-            "second_order_delay": second_order,
+            "y_max": args.ymax,
+            "z_max": args.zmax,
+            "diff_axis": args.diff_axis,
+            "relative": args.relative,
+            "body_frame": args.body_frame,
+            "second_order_delay": args.second_order,
         },
     )
 
-    device = torch.device(f"cuda:{de}" if torch.cuda.is_available() else "cpu")
+    device = torch.device(f"cuda:{args.device}" if torch.cuda.is_available() else "cpu")
 
     policy = algo_class.load(SAVED_POLICY_DIR / f"{policy_name}.zip")
 
@@ -232,23 +167,75 @@ def RMA():
         input_dims=trainenv.base_dims + action_dims, e_dims=e_dims
     )
     adaptation_network = adaptation_network.to(device)
-    if not adaptation_network_state_dict is None:
+    if adaptation_network_state_dict is not None:
         adaptation_network.load_state_dict(adaptation_network_state_dict)
 
     optimizer = torch.optim.Adam(adaptation_network.parameters(), lr=0.001)
 
     writer = SummaryWriter(DEFAULT_LOG_DIR / f"{adapt_name}_logs")
     running_loss = 0.0
-    with Progress(
-        *Progress.get_default_columns(),
-        TimeElapsedColumn(),
-        MofNCompleteColumn(),
-        RateColumn(unit="Iterations"),
-    ) as pg:
-        iter = pg.add_task("Iteration", total=train_iterations)
-        rollouts = pg.add_task("Rollouts", total=500)
+    try:
+        from rich.progress import Progress, RateColumn, MofNCompleteColumn, TimeElapsedColumn
 
-        for i in range(train_iterations):
+        pg = Progress(
+            *Progress.get_default_columns(),
+            TimeElapsedColumn(),
+            MofNCompleteColumn(),
+            RateColumn(unit="Iterations"),
+        )
+        use_rich = True
+    except ImportError:
+        import tqdm
+
+        pg = None
+        use_rich = False
+
+    if use_rich:
+        try:
+            with pg:
+                iter_task = pg.add_task("Iteration", total=train_iterations)
+                rollouts_task = pg.add_task("Rollouts", total=500)
+
+                for i in range(train_iterations):
+                    optimizer.zero_grad()
+
+                    all_e_pred, all_e_gt = rollout_adaptive_policy(
+                        500,
+                        adaptation_network,
+                        policy,
+                        evalenv,
+                        n_envs,
+                        time_horizon,
+                        trainenv.base_dims,
+                        e_dims,
+                        device,
+                        progress=(pg, rollouts_task),
+                    )
+
+                    loss = F.mse_loss(all_e_pred, all_e_gt)
+                    loss.backward()
+                    print(f"loss: {loss.detach().cpu().item()}")
+                    optimizer.step()
+
+                    running_loss += loss.detach().cpu().item()
+
+                    if i % 500 == 0:
+                        torch.save(
+                            adaptation_network.state_dict(),
+                            SAVED_POLICY_DIR / f"{policy_name}_adapt" / f"{adapt_name}_{i}",
+                        )
+                    if i % 10 == 0:
+                        writer.add_scalar("training loss", running_loss / 10, i * 500 * n_envs)
+                        running_loss = 0.0
+
+                    pg.update(task_id=iter_task, completed=i + 1)
+        finally:
+            torch.save(
+                adaptation_network.state_dict(),
+                SAVED_POLICY_DIR / f"{policy_name}_adapt" / f"{adapt_name}",
+            )
+    else:
+        for i in (bar := tqdm.tqdm(range(train_iterations), desc="rma")):
             optimizer.zero_grad()
 
             all_e_pred, all_e_gt = rollout_adaptive_policy(
@@ -261,19 +248,15 @@ def RMA():
                 trainenv.base_dims,
                 e_dims,
                 device,
-                progress=(pg, rollouts),
             )
 
             loss = F.mse_loss(all_e_pred, all_e_gt)
             loss.backward()
-
             print(f"loss: {loss.detach().cpu().item()}")
-
             optimizer.step()
 
             running_loss += loss.detach().cpu().item()
 
-            # Save adaptation network every 50 iterations
             if i % 500 == 0:
                 torch.save(
                     adaptation_network.state_dict(),
@@ -283,7 +266,7 @@ def RMA():
                 writer.add_scalar("training loss", running_loss / 10, i * 500 * n_envs)
                 running_loss = 0.0
 
-            pg.update(task_id=iter, completed=i + 1)
+            bar.set_postfix(loss=f"{loss.detach().cpu().item():.4f}")
 
         torch.save(
             adaptation_network.state_dict(),
@@ -292,4 +275,25 @@ def RMA():
 
 
 if __name__ == "__main__":
-    RMA()
+    import argparse
+
+    p = argparse.ArgumentParser()
+    p.add_argument("-t", "--task", default="trajectory_fbff")
+    p.add_argument("-n", "--name", default=None)
+    p.add_argument("-an", "--adapt-name", default=None)
+    p.add_argument("-a", "--algo", default="ppo")
+    p.add_argument("-c", "--config", default="datt_wind_adaptive.py")
+    p.add_argument("-i", "--iterations", type=int, default=5000)
+    p.add_argument("--ref", default=None)
+    p.add_argument("--n-envs", type=int, default=10)
+    p.add_argument("--subprocess", type=bool, default=False)
+    p.add_argument("--ymax", type=float, default=0.0)
+    p.add_argument("--zmax", type=float, default=0.0)
+    p.add_argument("--diff-axis", type=bool, default=False)
+    p.add_argument("--relative", type=bool, default=False)
+    p.add_argument("--seed", type=int, default=None)
+    p.add_argument("--body-frame", type=bool, default=False)
+    p.add_argument("--log-scale", type=bool, default=False)
+    p.add_argument("--second-order", type=bool, default=False)
+    p.add_argument("-de", "--device", type=int, default=0)
+    train_rma(p.parse_args())

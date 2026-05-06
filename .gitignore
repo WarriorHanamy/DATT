@@ -5,6 +5,7 @@ DATT/learning/data/
 DATT/learning/MPC/
 DATT/learning/logs/*
 DATT/learning/c_generated_code/
+logs/*
 checkpoints/*.zip
 c_generated_code/
 .vs/
