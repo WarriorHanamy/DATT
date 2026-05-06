@@ -1,5 +1,11 @@
+import sys
 import time
 import numpy as np
+
+import DATT
+
+sys.modules["quadsim"] = DATT
+
 import matplotlib.pyplot as plt
 
 from os.path import exists, getmtime
