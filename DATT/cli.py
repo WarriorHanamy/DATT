@@ -156,9 +156,9 @@ def main():
 
     if args.command == "train":
         preset = TRAIN_PRESETS[args.preset]
-        args.task = preset["task"]
-        args.algo = preset["algo"]
-        args.config = preset["config"]
+        args.task = preset.task
+        args.algo = preset.algo
+        args.config = preset.config
         args.ref = TRAJECTORY_REF_MAP.get(args.trajectory) if args.trajectory else None
 
         from DATT.learning.train_policy import train
@@ -175,11 +175,11 @@ def main():
             print(f"Using latest checkpoint: {args.name}")
         else:
             preset = EVAL_PRESETS[args.policy]
-            args.name = preset["checkpoint"]
-            args.task = preset["task"]
-            args.algo = preset["algo"]
+            args.name = preset.checkpoint
+            args.task = preset.task
+            args.algo = preset.algo
             if args.config is None:
-                args.config = preset["config"]
+                args.config = preset.config
 
         args.ref = TRAJECTORY_REF_MAP[args.trajectory]
 
@@ -192,9 +192,9 @@ def main():
             parser.error("train-rma: --name/-n is required (base policy checkpoint name)")
 
         preset = RMA_TRAIN_PRESETS[args.preset]
-        args.task = preset["task"]
-        args.algo = preset["algo"]
-        args.config = preset["config"]
+        args.task = preset.task
+        args.algo = preset.algo
+        args.config = preset.config
         args.ref = TRAJECTORY_REF_MAP.get(args.trajectory) if args.trajectory else None
 
         from DATT.learning.train_rma import train_rma
@@ -203,12 +203,12 @@ def main():
 
     elif args.command == "eval-rma":
         preset = RMA_EVAL_PRESETS[args.policy]
-        args.name = preset["checkpoint"]
-        args.task = preset["task"]
-        args.algo = preset["algo"]
-        args.config = preset["config"]
+        args.name = preset.checkpoint
+        args.task = preset.task
+        args.algo = preset.algo
+        args.config = preset.config
         if args.adapt_name is None:
-            args.adapt_name = preset["adapt_name"]
+            args.adapt_name = preset.adapt_name
         args.ref = TRAJECTORY_REF_MAP[args.trajectory]
 
         from DATT.learning.eval_rma_policy import do_eval_rma

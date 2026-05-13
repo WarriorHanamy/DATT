@@ -21,6 +21,7 @@ from DATT.learning.utils.feedforward_feature_extractor import FeedforwardFeature
 from DATT.learning.configs import *
 from DATT.learning.tasks import DroneTask
 from DATT.refs import TrajectoryRef
+from DATT.schema import save_policy_manifest
 
 
 class TQDMProgressCallback(BaseCallback):
@@ -179,6 +180,15 @@ def train(args):
     cb = CallbackList([progress_callback, checkpoint_callback])
     policy.learn(total_timesteps=args.timesteps, callback=cb)
     policy.save(SAVED_POLICY_DIR / policy_name)
+    save_policy_manifest(
+        policy_name=policy_name,
+        task=task.value,
+        algo=algo.value,
+        config=config,
+        total_steps=args.timesteps,
+        config_file=config_filename,
+    )
+    print(f"Saved policy manifest: {SAVED_POLICY_DIR / f'{policy_name}.policy.json'}")
 
 
 if __name__ == "__main__":

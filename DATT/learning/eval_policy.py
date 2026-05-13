@@ -21,6 +21,7 @@ from scipy.spatial.transform import Rotation as R
 
 from stable_baselines3.common.vec_env.base_vec_env import VecEnv
 from config.configuration import AllConfig
+from DATT.schema import load_policy_spec
 
 from DATT.learning.adaptation_module import Adapation
 
@@ -50,6 +51,18 @@ def do_eval(args):
         raise FileNotFoundError(f"{config_filename} is not a valid config file")
 
     config: AllConfig = import_config(config_filename)
+
+    # load (or derive) PolicySpec -- prints I/O contract at a glance
+    policy_spec = load_policy_spec(
+        policy_name=policy_name,
+        task=task.value,
+        algo=algo.value,
+        config=config,
+        config_file=config_filename,
+    )
+    print(f"Policy: {policy_spec.name}  task={policy_spec.task}  algo={policy_spec.algo}")
+    print(f"  obs dim={policy_spec.obs_dim}  body_frame={policy_spec.body_frame}")
+    print(f"  env_conditions: {policy_spec.env_conditions or 'none'}")
 
     # resolve trajectory reference
     ref_str = args.ref

@@ -23,6 +23,7 @@ dependencies = [
     "Pillow>=10.1",
     "rich>=13.6",
     "tensorboard>=2.9",
+    "pydantic>=2.13.4",
 ]
 
 [project.optional-dependencies]

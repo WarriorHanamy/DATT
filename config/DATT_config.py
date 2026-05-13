@@ -3,8 +3,8 @@ import numpy as np
 from config.configuration import *
 
 drone_config = DroneConfiguration(
-    mass=ConfigValue[float](1.0, randomize=False),
-    I=ConfigValue[float](1.0, randomize=False),
+    mass=ConfigValue[float](default=1.0, randomize=False),
+    I=ConfigValue[float](default=1.0, randomize=False),
     # g = ConfigValue[float](9.8, False)
 )
 
@@ -35,7 +35,7 @@ sim_config = SimConfiguration(
     obs_noise=ConfigValue[float](default=0.005, randomize=False),
     latency=ConfigValue[int](default=0.0, randomize=False),
     k=ConfigValue[float](default=0.4, randomize=False),
-    L1_simulation=ConfigValue[float](default=False, randomize=False),
+    L1_simulation=True,
 )
 
 adapt_config = AdaptationConfiguration()
@@ -47,12 +47,12 @@ policy_config = PolicyConfiguration()
 ref_config = RefConfiguration(init_ref=1, seed=0)
 
 config = AllConfig(
-    drone_config,
-    wind_config,
-    init_config,
-    sim_config,
-    adapt_config,
-    train_config,
-    policy_config,
-    ref_config,
+    drone_config=drone_config,
+    wind_config=wind_config,
+    init_config=init_config,
+    sim_config=sim_config,
+    adapt_config=adapt_config,
+    training_config=train_config,
+    policy_config=policy_config,
+    ref_config=ref_config,
 )

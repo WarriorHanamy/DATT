@@ -1,60 +1,62 @@
 """Preset mappings: semantic labels -> config, task, checkpoint combos."""
 
+from DATT.schema import EvalPreset, RMAEvalPreset, RMATrainingPreset, TrainingPreset
+
 TRAIN_PRESETS = {
-    "hover": {
-        "config": "datt_hover.py",
-        "task": "hover",
-        "algo": "ppo",
-    },
-    "tracking": {
-        "config": "datt.py",
-        "task": "trajectory_fbff",
-        "algo": "ppo",
-    },
-    "wind": {
-        "config": "datt_wind_adaptive.py",
-        "task": "trajectory_fbff",
-        "algo": "ppo",
-    },
+    "hover": TrainingPreset(
+        config="datt_hover.py",
+        task="hover",
+        algo="ppo",
+    ),
+    "tracking": TrainingPreset(
+        config="datt.py",
+        task="trajectory_fbff",
+        algo="ppo",
+    ),
+    "wind": TrainingPreset(
+        config="datt_wind_adaptive.py",
+        task="trajectory_fbff",
+        algo="ppo",
+    ),
 }
 
 EVAL_PRESETS = {
-    "hover": {
-        "checkpoint": "datt_hover",
-        "config": "datt_hover.py",
-        "task": "hover",
-        "algo": "ppo",
-    },
-    "tracking": {
-        "checkpoint": "datt",
-        "config": "datt.py",
-        "task": "trajectory_fbff",
-        "algo": "ppo",
-    },
-    "wind": {
-        "checkpoint": "datt_wind_adaptive",
-        "config": "datt_wind_adaptive.py",
-        "task": "trajectory_fbff",
-        "algo": "ppo",
-    },
+    "hover": EvalPreset(
+        checkpoint="datt_hover",
+        config="datt_hover.py",
+        task="hover",
+        algo="ppo",
+    ),
+    "tracking": EvalPreset(
+        checkpoint="datt",
+        config="datt.py",
+        task="trajectory_fbff",
+        algo="ppo",
+    ),
+    "wind": EvalPreset(
+        checkpoint="datt_wind_adaptive",
+        config="datt_wind_adaptive.py",
+        task="trajectory_fbff",
+        algo="ppo",
+    ),
 }
 
 RMA_EVAL_PRESETS = {
-    "wind": {
-        "checkpoint": "datt_wind_adaptive",
-        "adapt_name": "wind_RMA",
-        "config": "datt_wind_adaptive.py",
-        "task": "trajectory_fbff",
-        "algo": "ppo",
-    },
+    "wind": RMAEvalPreset(
+        checkpoint="datt_wind_adaptive",
+        adapt_name="wind_RMA",
+        config="datt_wind_adaptive.py",
+        task="trajectory_fbff",
+        algo="ppo",
+    ),
 }
 
 RMA_TRAIN_PRESETS = {
-    "wind": {
-        "config": "datt_wind_adaptive.py",
-        "task": "trajectory_fbff",
-        "algo": "ppo",
-    },
+    "wind": RMATrainingPreset(
+        config="datt_wind_adaptive.py",
+        task="trajectory_fbff",
+        algo="ppo",
+    ),
 }
 
 TRAJECTORY_CHOICES = [

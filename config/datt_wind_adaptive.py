@@ -3,8 +3,8 @@ import numpy as np
 from config.configuration import *
 
 drone_config = DroneConfiguration(
-    mass=ConfigValue[float](1.0, randomize=False, min=0.7, max=1.3),
-    I=ConfigValue[float](1.0, randomize=False, min=0.9, max=1.1),
+    mass=ConfigValue[float](default=1.0, randomize=False, min=0.7, max=1.3),
+    I=ConfigValue[float](default=1.0, randomize=False, min=0.9, max=1.1),
     # g = ConfigValue[float](9.8, False)
 )
 
@@ -38,4 +38,10 @@ sim_config = SimConfiguration(
 
 adapt_config = AdaptationConfiguration(include=[EnvCondition.WIND])
 
-config = AllConfig(drone_config, wind_config, init_config, sim_config, adapt_config)
+config = AllConfig(
+    drone_config=drone_config,
+    wind_config=wind_config,
+    init_config=init_config,
+    sim_config=sim_config,
+    adapt_config=adapt_config,
+)

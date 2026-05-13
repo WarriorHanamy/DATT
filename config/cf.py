@@ -3,8 +3,8 @@ import numpy as np
 from config.configuration import *
 
 drone_config = DroneConfiguration(
-    mass=ConfigValue[float](1.0, randomize=False, min=0.4, max=1.6),
-    I=ConfigValue[float](1.0, randomize=False, min=0.9, max=1.1),
+    mass=ConfigValue[float](default=1.0, randomize=False, min=0.4, max=1.6),
+    I=ConfigValue[float](default=1.0, randomize=False, min=0.9, max=1.1),
 )
 
 wind_config = WindConfiguration(
@@ -46,12 +46,12 @@ policy_config = PolicyConfiguration()
 ref_config = RefConfiguration(init_ref=1)
 
 datt_config = AllConfig(
-    drone_config,
-    wind_config,
-    init_config,
-    sim_config,
-    adapt_config,
-    train_config,
-    policy_config,
-    ref_config,
+    drone_config=drone_config,
+    wind_config=wind_config,
+    init_config=init_config,
+    sim_config=sim_config,
+    adapt_config=adapt_config,
+    training_config=train_config,
+    policy_config=policy_config,
+    ref_config=ref_config,
 )

@@ -47,12 +47,12 @@ policy_config = PolicyConfiguration()
 ref_config = RefConfiguration(init_ref=1)
 
 config = AllConfig(
-    drone_config,
-    wind_config,
-    init_config,
-    sim_config,
-    adapt_config,
-    train_config,
-    policy_config,
-    ref_config,
+    drone_config=drone_config,
+    wind_config=wind_config,
+    init_config=init_config,
+    sim_config=sim_config,
+    adapt_config=adapt_config,
+    training_config=train_config,
+    policy_config=policy_config,
+    ref_config=ref_config,
 )

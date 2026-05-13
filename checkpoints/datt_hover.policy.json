@@ -1,0 +1,88 @@
+{
+  "policy": {
+    "name": "datt_hover",
+    "task": "hover",
+    "algo": "ppo",
+    "body_frame": true,
+    "obs_groups": [
+      {
+        "name": "pos_bf",
+        "dim": 3,
+        "start": 0,
+        "low": -50.0,
+        "high": 50.0,
+        "description": "Position in body frame [m]"
+      },
+      {
+        "name": "vel_bf",
+        "dim": 3,
+        "start": 3,
+        "low": -50.0,
+        "high": 50.0,
+        "description": "Velocity in body frame [m/s]"
+      },
+      {
+        "name": "quat",
+        "dim": 4,
+        "start": 6,
+        "low": -50.0,
+        "high": 50.0,
+        "description": "Attitude quaternion (w, x, y, z) [-]"
+      }
+    ],
+    "obs_dim": 10,
+    "action_groups": [
+      {
+        "name": "thrust",
+        "dim": 1,
+        "start": 0,
+        "low": -20.0,
+        "high": 20.0,
+        "description": "Collective thrust [m/s²]"
+      },
+      {
+        "name": "angvel_x",
+        "dim": 1,
+        "start": 1,
+        "low": -20.0,
+        "high": 20.0,
+        "description": "Body angular velocity x [rad/s]"
+      },
+      {
+        "name": "angvel_y",
+        "dim": 1,
+        "start": 2,
+        "low": -20.0,
+        "high": 20.0,
+        "description": "Body angular velocity y [rad/s]"
+      },
+      {
+        "name": "angvel_z",
+        "dim": 1,
+        "start": 3,
+        "low": -20.0,
+        "high": 20.0,
+        "description": "Body angular velocity z [rad/s]"
+      }
+    ],
+    "action_dim": 4,
+    "action_bounds": [
+      -20.0,
+      20.0
+    ],
+    "time_horizon": 10,
+    "fb_term": false,
+    "ff_term": false,
+    "net_arch": [
+      64,
+      64,
+      64
+    ],
+    "adaptive": false,
+    "adaptation_type": null,
+    "adapt_network": null,
+    "env_conditions": []
+  },
+  "total_steps": 0,
+  "created_at": "2026-05-13T06:03:06.177366+00:00"
+}

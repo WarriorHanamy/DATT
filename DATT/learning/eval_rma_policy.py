@@ -20,6 +20,7 @@ from DATT.quadsim.visualizer import Vis
 from DATT.python_utils.plotu import subplot
 from scipy.spatial.transform import Rotation as R
 from config.configuration import AllConfig
+from DATT.schema import load_policy_spec
 from DATT.learning.utils.adaptation_network import AdaptationNetwork
 from DATT.learning.base_env import BaseQuadsimEnv
 
@@ -125,6 +126,23 @@ def do_eval_rma(args):
     algo_class = algo.algo_class()
 
     config: AllConfig = import_config(config_filename)
+
+    # load (or derive) PolicySpec
+    policy_spec = load_policy_spec(
+        policy_name=policy_name,
+        task=task.value,
+        algo=algo.value,
+        config=config,
+        adaptive=True,
+        adaptation_type="rma",
+        adapt_network=adapt_name,
+        config_file=config_filename,
+    )
+    print(f"Policy: {policy_spec.name}  task={policy_spec.task}  algo={policy_spec.algo}")
+    print(f"  obs dim={policy_spec.obs_dim}  body_frame={policy_spec.body_frame}")
+    print(f"  env_conditions: {policy_spec.env_conditions or 'none'}")
+    print(f"  adaptive={policy_spec.adaptive}  adaptation_type={policy_spec.adaptation_type}")
+
     adapt_config = config.adapt_config
     env_params = adapt_config.include
     time_horizon = adapt_config.time_horizon
